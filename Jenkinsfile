@@ -2,42 +2,46 @@ pipeline {
     agent any
     
     environment {
-        // Centralized environment variables
+        // Centralized account coordinates
         DOCKER_HUB_USER = 'shivammudgal' 
         IMAGE_NAME      = 'java-devops-project'
         IMAGE_TAG       = "v${env.BUILD_NUMBER}"
+        
+        // Elite Edge: Explicit absolute file system routes wrapped cleanly in internal quotes
+        MVN_CMD         = '"C:\\apache-maven-3.9.6\\bin\\mvn.cmd"'
+        DOCKER_CMD      = '"C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe"'
     }
     
     stages {
         stage('1. Git Checkout') {
             steps {
-                // Pulls down repository assets matching configuration targets
+                // Extracts remote repository branch files into active workspace
                 checkout scm
             }
         }
         
         stage('2. Maven Build') {
             steps {
-                // Elite Edge: Switched from sh to bat for native Windows script execution
-                bat 'mvn clean package'
+                // Direct call using the explicit file system path string
+                bat "${MVN_CMD} clean package"
             }
         }
         
         stage('3. Docker Build') {
             steps {
-                // Compiles layer builds using native command blocks
-                bat "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} ."
-                bat "docker tag ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+                // Direct container build invocation bypassing path resolution engines
+                bat "${DOCKER_CMD} build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} ."
+                bat "${DOCKER_CMD} tag ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
             }
         }
         
         stage('4. Docker Push') {
             steps {
                 withCredentials([string(credentialsId: 'docker-hub-credentials', variable: 'DOCKER_PASS')]) {
-                    // Safe command parameter parsing for Windows CLI engines
-                    bat "docker login -u ${DOCKER_HUB_USER} -p %DOCKER_PASS%"
-                    bat "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
-                    bat "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+                    // Securely authenticates and transmits artifacts using absolute location execution paths
+                    bat "${DOCKER_CMD} login -u ${DOCKER_HUB_USER} -p %DOCKER_PASS%"
+                    bat "${DOCKER_CMD} push ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
+                    bat "${DOCKER_CMD} push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
                 }
             }
         }
@@ -45,8 +49,8 @@ pipeline {
     
     post {
         always {
-            // Safely clear out local images to optimize host storage footprint
-            bat "docker rmi ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} || exit 0"
+            // Cleanup step ensuring old workspace images are purged without failing the overall pipeline
+            bat "${DOCKER_CMD} rmi ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} || exit 0"
             cleanWs()
         }
     }
