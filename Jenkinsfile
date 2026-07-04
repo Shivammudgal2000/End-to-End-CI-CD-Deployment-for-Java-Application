@@ -6,6 +6,9 @@ pipeline {
         DOCKER_HUB_USER = 'shivammudgal' 
         IMAGE_NAME      = 'java-devops-project'
         IMAGE_TAG       = "v${env.BUILD_NUMBER}"
+
+        // Elite Edge: Direct traffic through the local TCP loopback port to bypass Windows Named Pipe locks
+        DOCKER_HOST     = 'tcp://127.0.0.1:2375'
         
         // Elite Edge: Explicit absolute file system routes wrapped cleanly in internal quotes
         MVN_CMD         = '"C:\\apache-maven-3.9.6\\bin\\mvn.cmd"'
