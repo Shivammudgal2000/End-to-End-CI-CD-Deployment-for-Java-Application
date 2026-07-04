@@ -28,7 +28,6 @@ pipeline {
         
         stage('3. Docker Build & Auth') {
             steps {
-                // Elite Edge: Authenticate FIRST to overwrite any dead cached tokens preventing base image pulls
                 withCredentials([string(credentialsId: 'docker-hub-credentials', variable: 'DOCKER_PASS')]) {
                     bat "${DOCKER_CMD} login -u ${DOCKER_HUB_USER} -p %DOCKER_PASS%"
                     bat "${DOCKER_CMD} build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} ."
@@ -39,16 +38,24 @@ pipeline {
         
         stage('4. Docker Push') {
             steps {
-                // Securely transmit the compiled images up to the cloud registry
                 bat "${DOCKER_CMD} push ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
                 bat "${DOCKER_CMD} push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+            }
+        }
+        
+        // --- NEW TASK 7 STAGE: CONTINUOUS DEPLOYMENT ---
+        stage('5. Deploy to Production') {
+            steps {
+                // Elite Edge: Force-remove the old server to prevent port conflicts, then launch the new version
+                bat "${DOCKER_CMD} rm -f live-java-app || exit 0"
+                bat "${DOCKER_CMD} run -d -p 8085:8080 --name live-java-app ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
             }
         }
     }
     
     post {
         always {
-            // Cleanup local images and explicitly log out to prevent future token caching issues
+            // Housekeeping
             bat "${DOCKER_CMD} rmi ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} || exit 0"
             bat "${DOCKER_CMD} logout || exit 0"
             cleanWs()
