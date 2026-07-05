@@ -53,12 +53,17 @@ pipeline {
         }
     }
     
-    post {
-        always {
-            // Housekeeping
-            bat "${DOCKER_CMD} rmi ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} || exit 0"
-            bat "${DOCKER_CMD} logout || exit 0"
-            cleanWs()
-        }
+    // This block is appended at the very root level of your Jenkinsfile inside the 'post' block
+post {
+    success {
+        mail to: 'team-alerts@yourcompany.com',
+             subject: "Pipeline Success: Build #${env.BUILD_NUMBER} is LIVE",
+             body: "The End-to-End CI/CD deployment for Build #${env.BUILD_NUMBER} completed successfully on Docker Swarm."
     }
+    failure {
+        mail to: 'dev-leads@yourcompany.com',
+             subject: "CRITICAL PIPELINE FAILURE: Build #${env.BUILD_NUMBER}",
+             body: "Build #${env.BUILD_NUMBER} failed during execution. Please check the console logs at: ${env.BUILD_URL}"
+    }
+}
 }
